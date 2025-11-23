@@ -164,7 +164,3 @@ Sentinel-QA/
 
 ---
 
-
----
-
-**Built with ❤️ for QA Engineers who believe in autonomous, hallucination-free testing.**
