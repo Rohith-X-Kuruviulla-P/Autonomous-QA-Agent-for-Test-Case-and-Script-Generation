@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+streamlit
+langchain
+langchain-community
+langchain-ollama
+langchain-chroma
+langchain-huggingface
+pydantic
+python-multipart
+requests
+beautifulsoup4
+lxml
+tiktoken
+sentence-transformers

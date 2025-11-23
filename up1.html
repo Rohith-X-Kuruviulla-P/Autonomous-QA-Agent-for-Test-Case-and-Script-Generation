@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>E-Shop Checkout</title>
+    <style>
+        .error { color: red; font-size: 0.9em; }
+        .success { color: green; font-weight: bold; }
+        .container { max_width: 600px; margin: 20px auto; font-family: sans-serif; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Secure Checkout</h1>
+
+    <div class="section" id="cart-summary">
+        <h3>Order Summary</h3>
+        <div class="item">Wireless Headphones - $100.00</div>
+        <p>Subtotal: $<span id="subtotal">100.00</span></p>
+        
+        <label for="discount-input">Discount Code:</label>
+        <input type="text" id="discount-input" placeholder="Enter code">
+        <button id="apply-discount-btn">Apply</button>
+        <p id="discount-message"></p>
+        
+        <h4>Total: $<span id="total-price">100.00</span></h4>
+    </div>
+
+    <div class="section" id="user-details">
+        <h3>Shipping Info</h3>
+        <label>Full Name: <input type="text" id="full-name"></label><br><br>
+        <label>Email: <input type="email" id="email"></label><br><br>
+        
+        <h4>Shipping Method</h4>
+        <label><input type="radio" name="shipping" id="shipping-standard" value="standard" checked> Standard (Free)</label><br>
+        <label><input type="radio" name="shipping" id="shipping-express" value="express"> Express ($10)</label>
+    </div>
+
+    <div class="section" id="payment-section">
+        <h3>Payment Details</h3>
+        <label><input type="radio" name="payment" id="pay-cc" value="cc"> Credit Card</label>
+        <label><input type="radio" name="payment" id="pay-paypal" value="paypal"> PayPal</label><br><br>
+        
+        <div id="cc-inputs">
+            <label>Card Number: <input type="text" id="card-number" maxlength="16"></label>
+        </div>
+    </div>
+
+    <button id="pay-now-btn">Pay Now</button>
+    <div id="status-message"></div>
+</div>
+
+</body>
+</html>

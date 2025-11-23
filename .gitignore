@@ -1,0 +1,18 @@
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Virtual Environment (Don't upload this!)
+.venv/
+venv/
+env/
+
+# Vector Database (Local "Brain" storage - too large for GitHub)
+data/chroma_db/
+chroma.sqlite3
+
+# Environment Variables (Protect your keys)
+.env
+
+# OS Metadata
+.DS_Store

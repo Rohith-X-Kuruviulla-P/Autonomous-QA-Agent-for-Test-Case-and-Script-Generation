@@ -1,0 +1,44 @@
+{
+  "api_name": "E-Shop Payment Gateway",
+  "version": "v2.1",
+  "base_url": "https://api.eshop-example.com",
+  "endpoints": [
+    {
+      "path": "/apply_coupon",
+      "method": "POST",
+      "description": "Validates a discount code and returns the new total.",
+      "request_payload": {
+        "code": "string"
+      },
+      "expected_responses": {
+        "200": { "valid": true, "discount_amount": "float" },
+        "400": { "valid": false, "error": "Invalid coupon code" }
+      }
+    },
+    {
+      "path": "/calculate_shipping",
+      "method": "POST",
+      "description": "Updates total based on shipping selection.",
+      "request_payload": {
+        "method": "string (standard|express)"
+      }
+    },
+    {
+      "path": "/submit_order",
+      "method": "POST",
+      "description": "Finalizes the purchase.",
+      "request_payload": {
+        "user": {
+          "name": "string",
+          "email": "string",
+          "address": "string"
+        },
+        "payment": {
+          "method": "string (cc|paypal)",
+          "token": "string"
+        },
+        "cart_total": "float"
+      }
+    }
+  ]
+}
