@@ -1,4 +1,4 @@
-# 🛡️ Sentinel-QA: Autonomous Test Orchestrator
+# Sentinel-QA: Autonomous Test Orchestrator
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![FastAPI](https://img.shields.io/badge/Backend-FastAPI-green) ![Streamlit](https://img.shields.io/badge/Frontend-Streamlit-red) ![AI](https://img.shields.io/badge/AI-Ollama%20%7C%20LangChain-orange)
 
@@ -6,15 +6,15 @@
 
 ---
 
-## 🚀 Key Features
+##  Key Features
 
-* **🧠 Cognitive RAG Engine:** Ingests product specifications and UI guides into a local Vector Database (ChromaDB) for context-aware reasoning.
-* **🚫 Zero Hallucinations:** Uses strict "Grounded In" citation mechanisms; if a feature isn't in the docs, the agent won't test it.
-* **🕵️ Hybrid HTML Parsing:** Combines BeautifulSoup static analysis with LLM logic to map exact DOM selectors (IDs, Names, XPaths).
-* **🤖 Multi-Agent Workflow:**
+* ** Cognitive RAG Engine:** Ingests product specifications and UI guides into a local Vector Database (ChromaDB) for context-aware reasoning.
+* ** Zero Hallucinations:** Uses strict "Grounded In" citation mechanisms; if a feature isn't in the docs, the agent won't test it.
+* ** Hybrid HTML Parsing:** Combines BeautifulSoup static analysis with LLM logic to map exact DOM selectors (IDs, Names, XPaths).
+* ** Multi-Agent Workflow:**
   * **Strategist Agent:** Creates structured JSON test plans based on business rules.
   * **Engineer Agent:** Converts test plans into runnable Python Selenium 4 scripts.
-* **🔒 Privacy First:** Runs 100% locally using **Ollama** (Llama 3) and local embeddings. No data leaves your machine.
+* ** Privacy First:** Runs 100% locally using **Ollama** (Llama 3) and local embeddings. No data leaves your machine.
 
 ---
 
@@ -27,7 +27,7 @@
 
 ---
 
-## ⚙️ Prerequisites
+##  Prerequisites
 
 Before running the system, ensure you have the following installed:
 
@@ -42,7 +42,7 @@ ollama pull nomic-embed-text
 
 ---
 
-## 📦 Installation
+##  Installation
 
 1. **Clone the Repository**
 ```bash
@@ -64,7 +64,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🚦 Usage Guide
+##  Usage Guide
 
 The system runs as two separate processes: the Backend API and the Frontend UI.
 
@@ -110,7 +110,7 @@ Your browser will automatically open the dashboard.
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 ```
 Sentinel-QA/
 ├── assets/              # Store your test assets here (HTML/Docs)
@@ -129,7 +129,7 @@ Sentinel-QA/
 
 ---
 
-## 🧪 Example Scenarios
+##  Example Scenarios
 
 ### Scenario A: Checkout Form
 
@@ -145,7 +145,7 @@ Sentinel-QA/
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -155,7 +155,7 @@ Sentinel-QA/
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 * **Ollama** for enabling local LLM inference
 * **LangChain** for RAG orchestration
