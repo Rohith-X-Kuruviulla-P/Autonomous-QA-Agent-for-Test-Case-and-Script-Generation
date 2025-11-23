@@ -1,18 +1,33 @@
-# Python caches
+# --- 1. Python System Files (Junk) ---
+# These are auto-generated compiled files. No one else needs them.
 __pycache__/
 *.py[cod]
 
-# Virtual Environment (Don't upload this!)
+# --- 2. Virtual Environment (Critical) ---
+# Your .venv folder is huge and specific to your computer. 
+# Do NOT upload this.
 .venv/
 venv/
 env/
 
-# Vector Database (Local "Brain" storage - too large for GitHub)
-data/chroma_db/
-chroma.sqlite3
+# --- 3. The "Brain" / Database (Critical) ---
+# This contains your local Vector DB. It is large and binary.
+# Users should rebuild this themselves using the 'Ingest' button.
+data/
+chroma_db/
+*.sqlite3
 
-# Environment Variables (Protect your keys)
+# --- 4. Security / Secrets ---
+# Never upload API keys or environment configs.
 .env
 
-# OS Metadata
+# --- 5. Operating System Junk ---
 .DS_Store
+Thumbs.db
+
+# --- 6. Scratchpad / Temp Files (Optional) ---
+# Based on your screenshot, these look like temporary testing files
+test.py
+re.txt
+prod.txt
+prod.json
