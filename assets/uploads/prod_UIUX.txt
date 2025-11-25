@@ -1,18 +1,13 @@
-UI/UX Design Standards - Checkout Module
+UI/UX Design Standards
 
-1. Color Palettes
-   - Primary Action Button ("Pay Now"): Must be Green (#28a745) to indicate a positive action[cite: 80].
-   - Error Messages: Must be displayed in Red (#dc3545) text for high visibility[cite: 79].
-   - Success Messages: Must be displayed in Green bold text.
+1. Color Palette
+   - Primary Success Action ("Pay Now"): Must be Green (#28a745).
+   - Error Messages: Must be displayed in Red text for high visibility.
+   - Success Message: Must be displayed in a light green box with dark green text.
 
-2. Input Field Behaviors
-   - Required Fields: Must have a visual indicator (e.g., an asterisk *) or turn red border upon invalid submission.
-   - Discount Input: Should be placed directly near the Total Price for context.
+2. Interaction
+   - Hover Effects: Buttons should darken slightly when hovered to indicate interactivity.
+   - Validation Feedback: Error messages should appear immediately below the invalid input field.
 
-3. Typography & Layout
-   - The "Order Summary" section should be visually distinct (e.g., inside a bordered box or different background color).
-   - Total Price: Must be displayed in a larger font size (h4 or larger) than the subtotal.
-
-4. Interaction States
-   - Hover Effects: Buttons should darken slightly when hovered.
-   - Disabled State: The "Pay Now" button should appear visually disabled (greyed out) if the cart is empty.
+3. Typography
+   - Total Price: Should be displayed in bold font to distinguish it from other text.

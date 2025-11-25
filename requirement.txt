@@ -13,3 +13,7 @@ beautifulsoup4
 lxml
 tiktoken
 sentence-transformers
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-generativeai
