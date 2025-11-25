@@ -1,21 +1,16 @@
 import os
-# --- CRITICAL FIX: Remove broken SSL environment variable ---
-# This prevents the FileNotFoundError: [Errno 2] No such file or directory
 os.environ.pop("SSL_CERT_FILE", None)
-# ----------------------------------------------------------
-
 import shutil
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from typing import List
 from config import settings
 from ingestion import ingest_documents
 from vector_db import clear_db
-# The crash was happening here, so the fix must be above this line:
 from agents import generate_test_cases_agent, generate_selenium_script_agent, TestPlan
 
 app = FastAPI(title="Sentinel-QA")
 
-# ... (rest of your code remains the same)
+#rest of your code remains the same
 @app.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
     """
@@ -52,7 +47,7 @@ async def generate_script(test_case: str = Form(...), html_filename: str = Form(
     """
     Generates a Selenium script for a specific test case.
     """
-    # Load the raw HTML to feed to the Agent
+    #Load the raw HTML to feed to the Agent
     html_path = os.path.join(settings.UPLOAD_DIR, html_filename)
     if not os.path.exists(html_path):
         raise HTTPException(status_code=404, detail="HTML file not found.")

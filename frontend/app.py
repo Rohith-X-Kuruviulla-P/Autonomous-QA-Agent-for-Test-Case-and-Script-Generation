@@ -10,7 +10,7 @@ API_URL = "http://localhost:8000"
 st.title("Sentinel-QA: Autonomous Testing Agent")
 st.markdown("---")
 
-# --- Sidebar: Phase 1 - Ingestion ---
+#Ingestion
 with st.sidebar:
     st.header("1. Knowledge Base")
     uploaded_files = st.file_uploader(
@@ -31,7 +31,7 @@ with st.sidebar:
         else:
             st.warning("Please upload files first.")
 
-# --- Main Area: Phase 2 - Test Strategy ---
+#Phase 2 - Test Strategy
 st.header("2. Test Strategy Agent")
 user_query = st.text_input("Describe required tests (e.g., 'Generate positive tests for the checkout form')")
 
@@ -50,7 +50,7 @@ if 'test_plan' in st.session_state:
     df = pd.DataFrame(st.session_state['test_plan'])
     st.dataframe(df, use_container_width=True)
     
-    # --- Phase 3: Script Generation ---
+    #Script Generation
     st.header("3. Automation Agent")
     
     # Find the HTML file in the uploaded list (logic assumption for UI)
