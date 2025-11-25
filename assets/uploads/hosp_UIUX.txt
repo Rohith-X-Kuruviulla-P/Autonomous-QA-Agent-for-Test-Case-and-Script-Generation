@@ -1,0 +1,18 @@
+CarePulse UI/UX Design System
+
+1. Color Coding for Status
+   - Emergency / Critical: Must use Red background (#ffebee) with Dark Red text (#c62828) for maximum contrast.
+   - Stable / Available: Must use Light Green background (#e8f5e9) with Dark Green text.
+   - Busy / In Surgery: Must use Grey or Amber indicators.
+
+2. Button Behavior
+   - "Admit Patient" Button:
+     - Must be Blue (#1976d2) to signify a primary positive action.
+     - Must be disabled if the "Patient Name" input is empty.
+
+3. Accessibility
+   - All form inputs must have an `aria-label` or a visible `<label>` tag.
+   - Font size for patient names must be at least 16px for readability.
+
+4. Feedback
+   - Successful admission must show a "Patient Admitted" toast notification at the top right, not a browser alert.

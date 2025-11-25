@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarePulse Hospital Admin</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #ca8a04;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #1f2937;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        header {
+            grid-column: 1 / -1;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1, h3 { margin: 0; }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Form Elements */
+        form { display: flex; flex-direction: column; gap: 15px; }
+        
+        label { font-weight: 600; font-size: 0.9em; margin-bottom: 4px; display: block; }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box; /* Fixes width issues */
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        /* Buttons */
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { background-color: #ccc !important; cursor: not-allowed; }
+
+        .btn-admit { background-color: var(--primary); color: white; margin-top: 10px; }
+        .btn-page { background-color: var(--warning); color: white; width: 100%; margin-top: 10px;}
+        .btn-paged { background-color: var(--success); color: white; }
+
+        /* Doctor Board */
+        .doctor-card {
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            background: #f9fafb;
+        }
+        
+        .doc-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .status-busy { background-color: #fee2e2; color: var(--danger); }
+        .status-available { background-color: #dcfce7; color: var(--success); }
+
+        /* Dynamic Feedback */
+        .hidden { display: none; }
+        
+        #admission-feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .feedback-success { background-color: #dcfce7; color: var(--success); }
+        .feedback-error { background-color: #fee2e2; color: var(--danger); }
+
+        /* Patient List (New Feature) */
+        #patient-list-section { grid-column: 1 / -1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e5e7eb; }
+        th { background-color: #f9fafb; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>🏥 CarePulse Admin</h1>
+            <small style="color: #6b7280;">Emergency Department Dashboard</small>
+        </div>
+        <div id="user-profile">Logged in as: <strong>Nurse_Sarah</strong></div>
+    </header>
+
+    <section id="registration-panel" class="card">
+        <h3>📝 Patient Admission</h3>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+        
+        <form id="admit-patient-form" onsubmit="event.preventDefault();">
+            
+            <div>
+                <label for="patient-name">Patient Name *</label>
+                <input type="text" id="patient-name" placeholder="Last, First" required>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label for="patient-age">Age *</label>
+                    <input type="number" id="patient-age" min="0" max="120" oninput="checkMinor()">
+                </div>
+                <div style="flex: 2;">
+                    <label for="triage-select">Triage Priority</label>
+                    <select id="triage-select" onchange="updateTriageColor()">
+                        <option value="routine">Routine (Green)</option>
+                        <option value="urgent">Urgent (Yellow)</option>
+                        <option value="emergency">Emergency (Red)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="guardian-container" class="hidden" style="background: #fff7ed; padding: 10px; border-radius: 6px; border: 1px solid orange;">
+                <label for="guardian-name">Guardian Name (Minor) *</label>
+                <input type="text" id="guardian-name" placeholder="Parent/Guardian Name">
+            </div>
+
+            <div>
+                <label for="insurance-input">Insurance Provider ID</label>
+                <input type="text" id="insurance-input" placeholder="e.g. BCBS-12345">
+                <small style="color: gray; font-size: 0.8em;">Required for Routine/Urgent cases</small>
+            </div>
+
+            <div id="emergency-contact-group">
+                <label for="emergency-phone">Emergency Contact Phone</label>
+                <input type="tel" id="emergency-phone" placeholder="(555) 000-0000" maxlength="10">
+            </div>
+
+            <button type="button" id="btn-admit-patient" class="btn-admit" onclick="handleAdmission()">Admit Patient</button>
+        </form>
+
+        <div id="admission-feedback" class="hidden"></div>
+    </section>
+
+    <section id="doctor-board">
+        <h3>👨‍⚕️ On-Call Staff</h3>
+        
+        <div class="doctor-card" id="doc-smith" style="opacity: 0.7;">
+            <div style="display: flex; justify-content: space-between;">
+                <span class="doc-name"><strong>Dr. Smith</strong><br><small>Cardiology</small></span>
+                <span class="doc-status status-busy">In Surgery</span>
+            </div>
+            <button disabled style="width: 100%; margin-top: 10px; font-size: 0.8em;">Unavailable</button>
+        </div>
+
+        <div class="doctor-card" id="doc-jones">
+            <div style="display: flex; justify-content: space-between;">
+                <span class="doc-name"><strong>Dr. Jones</strong><br><small>Pediatrics</small></span>
+                <span class="doc-status status-available">Available</span>
+            </div>
+            <button id="btn-page-dr-jones" class="btn-page" onclick="pageDoctor('Jones')">Page Doctor</button>
+        </div>
+    </section>
+
+    <section id="patient-list-section" class="card">
+        <h3>Recent Admissions</h3>
+        <table id="admitted-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Priority</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="patient-list-body">
+                </tbody>
+        </table>
+    </section>
+
+</div>
+
+<script>
+    // 1. DYNAMIC FIELDS: Show Guardian input if patient is a minor
+    function checkMinor() {
+        const age = document.getElementById('patient-age').value;
+        const guardianDiv = document.getElementById('guardian-container');
+        
+        if (age && age < 18) {
+            guardianDiv.classList.remove('hidden');
+        } else {
+            guardianDiv.classList.add('hidden');
+            document.getElementById('guardian-name').value = ''; // Clear if hidden
+        }
+    }
+
+    // 2. VISUALS: Change border color based on triage
+    function updateTriageColor() {
+        const triage = document.getElementById('triage-select').value;
+        const panel = document.getElementById('registration-panel');
+        
+        if (triage === 'emergency') panel.style.borderTop = "5px solid #dc2626";
+        else if (triage === 'urgent') panel.style.borderTop = "5px solid #ca8a04";
+        else panel.style.borderTop = "5px solid #16a34a";
+    }
+
+    // 3. MAIN LOGIC: Handle Admission Button Click
+    function handleAdmission() {
+        const name = document.getElementById('patient-name').value.trim();
+        const age = document.getElementById('patient-age').value;
+        const triage = document.getElementById('triage-select').value;
+        const insurance = document.getElementById('insurance-input').value.trim();
+        const feedback = document.getElementById('admission-feedback');
+        const btn = document.getElementById('btn-admit-patient');
+
+        // Reset Feedback
+        feedback.className = 'hidden';
+        feedback.textContent = '';
+
+        // Validation Rules
+        if (!name) {
+            showError("Error: Patient Name is required.");
+            return;
+        }
+        if (!age) {
+            showError("Error: Age is required.");
+            return;
+        }
+        // Rule: Routine/Urgent requires insurance
+        if (triage !== 'emergency' && insurance === "") {
+            showError("Error: Insurance ID required for non-emergency cases.");
+            return;
+        }
+
+        // Simulate API Processing
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+
+        setTimeout(() => {
+            // Success Logic
+            showSuccess("Patient Admitted Successfully");
+            addToTable(name, triage);
+            
+            // Reset Form
+            document.getElementById('patient-name').value = "";
+            document.getElementById('patient-age').value = "";
+            document.getElementById('insurance-input').value = "";
+            document.getElementById('emergency-phone').value = "";
+            
+            btn.disabled = false;
+            btn.textContent = "Admit Patient";
+        }, 1000); // 1 second fake delay
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('admission-feedback');
+        el.textContent = msg;
+        el.className = 'feedback-error';
+        el.style.display = 'block';
+    }
+
+    function showSuccess(msg) {
+        const el = document.getElementById('admission-feedback');
+        el.textContent = msg;
+        el.className = 'feedback-success';
+        el.style.display = 'block';
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            el.style.display = 'none';
+        }, 3000);
+    }
+
+    function addToTable(name, triage) {
+        const tbody = document.getElementById('patient-list-body');
+        const row = document.createElement('tr');
+        const time = new Date().toLocaleTimeString();
+        
+        let badgeColor = triage === 'emergency' ? 'red' : (triage === 'urgent' ? 'orange' : 'green');
+
+        row.innerHTML = `
+            <td>${name}</td>
+            <td><span style="color: ${badgeColor}; font-weight: bold;">${triage.toUpperCase()}</span></td>
+            <td>${time}</td>
+            <td>Waiting</td>
+        `;
+        tbody.prepend(row);
+    }
+
+    // 4. DOCTOR LOGIC: Paging System
+    function pageDoctor(docName) {
+        const btn = document.getElementById(`btn-page-dr-${docName.toLowerCase()}`);
+        
+        if (btn.innerText === "Page Doctor") {
+            btn.innerText = "Paging...";
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerText = "Paged Successfully ✓";
+                btn.className = "btn-paged"; // Turns green
+                btn.disabled = false;
+            }, 1500);
+        } else {
+            // Toggle back
+            btn.innerText = "Page Doctor";
+            btn.className = "btn-page"; // Back to yellow
+        }
+    }
+</script>
+
+</body>
+</html>

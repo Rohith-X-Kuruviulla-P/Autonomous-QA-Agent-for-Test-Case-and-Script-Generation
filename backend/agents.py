@@ -1,29 +1,34 @@
+import os
 import re
+import json
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
-from langchain_ollama import ChatOllama
+import google.generativeai as genai
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from vector_db import get_vector_db
 from config import settings
-from dom_parser import parse_html_structure
+from dom_parser import get_clean_html_tree
 
-#Data Models
+# Configure Gemini
+genai.configure(api_key=settings.GOOGLE_API_KEY)
+
+# Data Models
 class TestCase(BaseModel):
     test_id: str = Field(description="Unique test case ID (e.g., TC-001)")
-    feature: str = Field(default="General Feature", description="Feature being tested")
-    test_type: str = Field(default="Functional", description="Type: positive, negative, boundary, or edge case")
-    scenario: str = Field(default="No description provided", description="Detailed test scenario description")
-    preconditions: str = Field(default="None", description="Prerequisites before test execution")
-    test_steps: List[str] = Field(default_factory=list, description="Step-by-step test execution instructions")
-    expected_result: str = Field(default="No specific result", description="Expected outcome")
-    grounded_in: str = Field(default="Unknown Source", description="Source document filename(s)")
-    priority: str = Field(default="Medium", description="Priority: High, Medium, Low")
+    feature: str = Field(default="General", description="Feature being tested")
+    test_type: str = Field(default="Positive", description="Type: positive, negative, boundary")
+    scenario: str = Field(default="No description", description="Test scenario")
+    preconditions: str = Field(default="None", description="Prerequisites")
+    test_steps: List[str] = Field(default_factory=list, description="Step-by-step instructions")
+    expected_result: str = Field(default="Success", description="Expected result")
+    grounded_in: str = Field(default="Unknown", description="Source doc")
+    priority: str = Field(default="Medium", description="Priority")
 
 class TestPlan(BaseModel):
-    test_cases: List[TestCase] = Field(description="List of generated test cases")
+    test_cases: List[TestCase]
 
-#Helper Functions
+#  Helpers
 def _clean_code_output(code: str) -> str:
     """Remove markdown formatting (```python) from code output."""
     code = re.sub(r'^```python\s*\n', '', code, flags=re.MULTILINE)
@@ -31,139 +36,149 @@ def _clean_code_output(code: str) -> str:
     code = re.sub(r'\n```\s*$', '', code)
     return code.strip()
 
-#The Test Strategist
+def _call_gemini(prompt: str, system_instruction: str = "") -> str:
+    """Helper to call Gemini API maintaining same interface as LangChain"""
+    try:
+        model = genai.GenerativeModel(
+            model_name=settings.GEMINI_MODEL,
+            system_instruction=system_instruction
+        )
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        raise Exception(f"Gemini API error: {str(e)}")
+
+# Agent 1: The Test Strategist 
 def generate_test_cases_agent(query: str) -> Dict:
-    """
-    Generates structured test cases using RAG + JSON Mode.
-    """
-    # Retrieval
+    """Generates structured test cases using RAG + JSON Mode."""
     db = get_vector_db()
     retriever = db.as_retriever(search_kwargs={"k": 6})
     docs = retriever.invoke(query)
     
-    # Format context with source citation
-    context_parts = []
-    for doc in docs:
-        source = doc.metadata.get('source', 'Unknown')
-        context_parts.append(f"[Source: {source}]\n{doc.page_content}")
-    context_str = "\n\n".join(context_parts)
+    context_str = "\n\n".join([f"[Source: {d.metadata.get('source', 'Unknown')}]\n{d.page_content}" for d in docs])
 
-    #Setup LLM
-    llm = ChatOllama(
-        model=settings.LLM_MODEL,
-        temperature=0.1, 
-        num_predict=4096,
-        format="json"
-    )
-    parser = PydanticOutputParser(pydantic_object=TestPlan)
-
-    # C. Prompt (The "Original" Detailed Version)
+   
     system_prompt = """You are an Expert QA Test Lead.
-    
     INSTRUCTIONS:
-    1. Analyze the provided documentation context.
-    2. Generate a comprehensive test plan based ONLY on that context.
-    3. Output must be a valid JSON object matching the schema below.
-    4. Do NOT include any conversational text, preambles, or markdown formatting. Just the JSON.
-    5. 'grounded_in' must cite the source filename from the context.
+    1. Analyze the provided context.
+    2. Generate a test plan based ONLY on that context.
+    3. Output must be valid JSON matching the EXAMPLE below.
+    4. Do NOT output schema definitions (defs/properties)."""
 
-    DOCUMENTATION CONTEXT:
-    {context}
+    user_prompt = f"""
+CONTEXT:
+{context_str}
 
-    JSON SCHEMA:
-    {format_instructions}
-    """
+JSON EXAMPLE:
+{{
+    "test_cases": [
+        {{
+            "test_id": "TC-001",
+            "feature": "Login",
+            "test_type": "Positive",
+            "scenario": "Successful login",
+            "preconditions": "User is on login page",
+            "test_steps": ["Enter user", "Click Login"],
+            "expected_result": "Dashboard loads",
+            "grounded_in": "auth.md",
+            "priority": "High"
+        }}
+    ]
+}}
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("user", "Generate test plan for: {query}")
-    ])
-
-    chain = prompt | llm | parser
+Generate test plan for: {query}
+"""
 
     try:
-        result = chain.invoke({
-            "context": context_str,
-            "query": query,
-            "format_instructions": parser.get_format_instructions()
-        })
-        return result.dict()
+      
+        response_text = _call_gemini(user_prompt, system_prompt)
+        
+        
+        response_text = response_text.strip()
+        if response_text.startswith('```json'):
+            response_text = response_text[7:]
+        if response_text.endswith('```'):
+            response_text = response_text[:-3]
+            
+        result_dict = json.loads(response_text)
+        return result_dict
     except Exception as e:
         return {"error": f"Agent Generation Failed: {str(e)}"}
 
-# The Selenium Engineer
+# Agent 2: The Selenium Engineer
 def generate_selenium_script_agent(test_case_json: str, html_content: str) -> str:
     """
-    Generates a Selenium script using the 'Direct Address' map from dom_parser.
+    Generates robust Selenium scripts that test REAL user behavior, not just typing.
     """
-    # This uses the separate dom_parser.py file to analyze the HTML
-    valid_selectors = parse_html_structure(html_content)
+    clean_html = get_clean_html_tree(html_content)
 
-    #Setup LLM
-    llm = ChatOllama(
-        model=settings.LLM_MODEL,
-        temperature=0.2, # Slightly higher for code creativity
-        num_predict=6000
-    )
+    system_prompt = """You are a Senior QA Automation Engineer specializing in robust, production-grade Selenium 4 (Python)."""
+    user_prompt = f"""
 
-    #Prompt
-    system_prompt = """You are a Senior QA Automation Engineer (Python + Selenium).
-    
-    CRITICAL INSTRUCTION:
-    You are provided with a 'Selector Map' below containing the valid elements found in the HTML.
-    You MUST use the exact selectors provided in this map. Do NOT guess IDs.
-    
-    SELECTOR MAP (Use these addresses):
-    {selectors}
+═══════════════════════════════════════════════════════════════════════════
+INPUT CONTEXT
+═══════════════════════════════════════════════════════════════════════════
+1. HTML SKELETON: A simplified view of the actual DOM. This is your ONLY source of truth.
+{clean_html}
 
-    INSTRUCTIONS:
-    1. Act as a Selenium automation expert.
-    2. Write a complete, runnable Python Selenium version 4+ script for the provided Test Case.
-    3. Use appropriate selectors (IDs, names, CSS selectors) based on the Selector Map.
-    4. Produce high-quality, fully executable code.
-    5. 
-    
-    STRICT CODE REQUIREMENTS (DO NOT VIOLATE):
-    1. **Selenium 4 Syntax Only**: 
-       - USE: `driver.find_element(By.ID, 'id')`
-       - DO NOT USE: `find_element_by_id` (Deprecated)
-    
-    2. **Explicit Waits (WebDriverWait)**:
-       - USE: `WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, 'id')))`
-       - NOTE: You must pass a TUPLE `((By..., ...))` to the EC condition. Double parentheses are required!
-    
-    3. **Python Naming Conventions**:
-       - USE: `element_to_be_clickable` (Snake Case)
-       - DO NOT USE: `elementToBeClickable` (Camel Case/Java style)
+2. TEST CASE: The user flow you must automate.
 
-    4. **Robustness**:
-       - Include `try/except` blocks to catch errors.
-       - Print "TEST PASSED" or "TEST FAILED" explicitly.
-       - Include `teardown()` to close the driver.
+═══════════════════════════════════════════════════════════════════════════
+CRITICAL RULES: SELECTORS (ZERO TOLERANCE FOR HALLUCINATIONS)
+═══════════════════════════════════════════════════════════════════════════
+1. **Strict Existence Check:** You MUST NOT invent IDs, Names, or Classes. If an attribute is not visible in the HTML SKELETON above, it does not exist.
+2. **Attribute Confusion:** Do not confuse `name="q"` with `id="q"`. Use the specific locator (`By.NAME` vs `By.ID`) that matches the skeleton.
+3. **Text Matching (XPath):** - NEVER use `text()='...'` on container tags (`div`, `span`, `form`). It fails if the element has child tags.
+   - ALWAYS use `contains(., 'Text')` to match text inside an element tree.
+   - *Correct:* `//button[contains(., 'Add to Cart')]`
+4. **Radio/Checkbox Logic:**
+   - Do NOT select by the visible text label (e.g., "Credit Card").
+   - Look at the `<input>` in the skeleton. Use its `value` attribute or specific `id`.
+   - *Correct:* `//input[@name='payment' and @value='cc']`
 
-    5. **Self-Contained**:
-       - Include ALL imports: `webdriver`, `By`, `WebDriverWait`, `EC`, `TimeoutException`.
-       - Do not assume any external setup.
+═══════════════════════════════════════════════════════════════════════════
+CRITICAL RULES: INTERACTION LOGIC
+═══════════════════════════════════════════════════════════════════════════
+1. **Dropdowns (<select>):** - You MUST use the `Select` class.
+   - `Select(driver.find_element(...)).select_by_visible_text("Option Name")`.
+   - NEVER use `.send_keys()` or `.click()` on options directly.
+2. **Wait Strategy:** - NEVER use `time.sleep()` for synchronization.
+   - USE `WebDriverWait(driver, 10).until(...)` for EVERY interaction.
+   - `EC.element_to_be_clickable` -> For Buttons, Links, Inputs.
+   - `EC.visibility_of_element_located` -> For Success Messages/Headings.
+   - `EC.presence_of_element_located` -> Only for hidden DOM elements.
+3. **Prerequisites:** - If the test assumes a state (e.g., "Checkout"), you must perform the setup steps (e.g., "Add item to cart") first, even if not explicitly stated in the simple test case description.
 
-    OUTPUT FORMAT:
-    - Return ONLY the raw Python code.
-    - No markdown formatting (no ```python blocks).
-    - No explanations text.
-    """
+═══════════════════════════════════════════════════════════════════════════
+CODE STRUCTURE & QUALITY
+═══════════════════════════════════════════════════════════════════════════
+1. **Imports:** Include all: `webdriver`, `By`, `WebDriverWait`, `EC`, `Select`, `TimeoutException`, `NoSuchElementException`.
+2. **Setup:** - Use `options = webdriver.ChromeOptions()`.
+   - Use `options.add_argument('--headless')` (unless debugging).
+   - Use `driver = webdriver.Chrome(options=options)`.
+3. **Error Handling:**
+   - Wrap the logic in `try...except...finally`.
+   - Catch `TimeoutException` and print a clear "FAILED: Element not found" message.
+   - Ensure `driver.quit()` is in the `finally` block.
+4. **Verification (Assertions):**
+   - Verify success by checking for **VISIBLE UI Elements** (Text, Success Messages, Page Headers).
+   - Do NOT verify by checking HTTP status codes or hidden backend IDs unless explicitly shown in the skeleton.
+   - Print "SUCCESSFUL" only if assertions pass.
+5. **File URL**: use `driver.get("file:///path/to/uploaded/file.html")` to load the HTML file.
+═══════════════════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════════════════
+- Return ONLY the raw Python code string.
+- NO Markdown blocks (```python).
+- NO conversational filler ("Here is your script").
 
-    # Only send test case logic in the user prompt to save context
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("user", "Here is the Test Case to automate:\n{test_case}")
-    ])
-
-    chain = prompt | llm | StrOutputParser()
+"""
 
     try:
-        result = chain.invoke({
-            "selectors": valid_selectors,
-            "test_case": test_case_json
-        })
+        
+        result = _call_gemini(user_prompt, system_prompt)
         return _clean_code_output(result)
     except Exception as e:
         return f"# Error generating script: {str(e)}"
+    
+    

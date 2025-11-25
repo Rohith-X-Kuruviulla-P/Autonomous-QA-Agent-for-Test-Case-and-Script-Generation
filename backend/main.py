@@ -10,13 +10,13 @@ from agents import generate_test_cases_agent, generate_selenium_script_agent, Te
 
 app = FastAPI(title="Sentinel-QA")
 
-#rest of your code remains the same
+
 @app.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
     """
     Clears DB and ingests new files (HTML + Docs).
     """
-    clear_db() # Reset for the new project assignment
+    clear_db() 
     saved_paths = []
     
     for file in files:
@@ -47,7 +47,7 @@ async def generate_script(test_case: str = Form(...), html_filename: str = Form(
     """
     Generates a Selenium script for a specific test case.
     """
-    #Load the raw HTML to feed to the Agent
+    # Load HTML content
     html_path = os.path.join(settings.UPLOAD_DIR, html_filename)
     if not os.path.exists(html_path):
         raise HTTPException(status_code=404, detail="HTML file not found.")
