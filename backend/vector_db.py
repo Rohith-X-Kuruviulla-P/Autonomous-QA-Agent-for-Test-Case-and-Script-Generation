@@ -1,5 +1,4 @@
-# backend/vector_db.py
-from langchain_chroma import Chroma  # Updated import
+from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from config import settings
 

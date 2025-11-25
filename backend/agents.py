@@ -8,10 +8,9 @@ from vector_db import get_vector_db
 from config import settings
 from dom_parser import parse_html_structure
 
-# --- 1. Robust Data Models (Crash-Proof) ---
+#Data Models
 class TestCase(BaseModel):
     test_id: str = Field(description="Unique test case ID (e.g., TC-001)")
-    # Defaults added to prevent crashes if LLM output is imperfect
     feature: str = Field(default="General Feature", description="Feature being tested")
     test_type: str = Field(default="Functional", description="Type: positive, negative, boundary, or edge case")
     scenario: str = Field(default="No description provided", description="Detailed test scenario description")
@@ -24,7 +23,7 @@ class TestCase(BaseModel):
 class TestPlan(BaseModel):
     test_cases: List[TestCase] = Field(description="List of generated test cases")
 
-# --- 2. Helper Functions ---
+#Helper Functions
 def _clean_code_output(code: str) -> str:
     """Remove markdown formatting (```python) from code output."""
     code = re.sub(r'^```python\s*\n', '', code, flags=re.MULTILINE)
@@ -32,12 +31,12 @@ def _clean_code_output(code: str) -> str:
     code = re.sub(r'\n```\s*$', '', code)
     return code.strip()
 
-# --- 3. Agent 1: The Test Strategist ---
+#The Test Strategist
 def generate_test_cases_agent(query: str) -> Dict:
     """
     Generates structured test cases using RAG + JSON Mode.
     """
-    # A. Retrieval
+    # Retrieval
     db = get_vector_db()
     retriever = db.as_retriever(search_kwargs={"k": 6})
     docs = retriever.invoke(query)
@@ -49,12 +48,12 @@ def generate_test_cases_agent(query: str) -> Dict:
         context_parts.append(f"[Source: {source}]\n{doc.page_content}")
     context_str = "\n\n".join(context_parts)
 
-    # B. Setup LLM
+    #Setup LLM
     llm = ChatOllama(
         model=settings.LLM_MODEL,
         temperature=0.1, 
         num_predict=4096,
-        format="json" # Strict JSON enforcement
+        format="json"
     )
     parser = PydanticOutputParser(pydantic_object=TestPlan)
 
@@ -90,26 +89,24 @@ def generate_test_cases_agent(query: str) -> Dict:
         })
         return result.dict()
     except Exception as e:
-        # Return error dict for UI handling
         return {"error": f"Agent Generation Failed: {str(e)}"}
 
-# --- 4. Agent 2: The Selenium Engineer (Hybrid Approach) ---
+# The Selenium Engineer
 def generate_selenium_script_agent(test_case_json: str, html_content: str) -> str:
     """
     Generates a Selenium script using the 'Direct Address' map from dom_parser.
     """
-    # A. Get Direct Addresses (The Truth Source)
     # This uses the separate dom_parser.py file to analyze the HTML
     valid_selectors = parse_html_structure(html_content)
 
-    # B. Setup LLM
+    #Setup LLM
     llm = ChatOllama(
         model=settings.LLM_MODEL,
         temperature=0.2, # Slightly higher for code creativity
         num_predict=6000
     )
 
-    # C. Prompt (The "Original" Detailed Version)
+    #Prompt
     system_prompt = """You are a Senior QA Automation Engineer (Python + Selenium).
     
     CRITICAL INSTRUCTION:

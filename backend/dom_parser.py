@@ -5,7 +5,7 @@ def get_unique_selector(tag) -> str:
     Generates the most robust 'Direct Address' for an element.
     Priority: ID > Name > Placeholder > Button Text > CSS Selector
     """
-    # 1. Best Case: ID (Unique Address)
+    # 1. Best Case: ID
     if tag.get('id'):
         return f"By.ID, '{tag.get('id')}'"
     
