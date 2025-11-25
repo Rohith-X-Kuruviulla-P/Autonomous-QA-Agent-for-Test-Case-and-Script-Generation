@@ -1,5 +1,6 @@
 import os
-
+from dotenv import load_dotenv
+load_dotenv()
 class Settings:
     # Paths
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -8,7 +9,7 @@ class Settings:
     
     EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2" 
 
-    GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")  
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     GEMINI_MODEL = "gemini-2.5-flash"  
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)

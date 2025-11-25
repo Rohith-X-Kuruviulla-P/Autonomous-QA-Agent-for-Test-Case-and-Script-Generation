@@ -1,4 +1,4 @@
-
+import os
 import re
 import json
 from typing import List, Dict, Optional
@@ -11,7 +11,7 @@ from config import settings
 from dom_parser import get_clean_html_tree
 
 # Configure Gemini
-genai.configure(api_key=settings.GEMINI_API_KEY)
+genai.configure(api_key=settings.GOOGLE_API_KEY)
 
 # Data Models
 class TestCase(BaseModel):

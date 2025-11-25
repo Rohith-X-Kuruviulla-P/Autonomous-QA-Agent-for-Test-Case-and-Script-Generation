@@ -3,7 +3,6 @@ uvicorn
 streamlit
 langchain
 langchain-community
-langchain-ollama
 langchain-chroma
 langchain-huggingface
 pydantic
@@ -17,3 +16,4 @@ google-auth
 google-auth-oauthlib
 google-auth-httplib2
 google-generativeai
+python-dotenv
