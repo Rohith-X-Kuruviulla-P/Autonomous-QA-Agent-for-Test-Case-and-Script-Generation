@@ -6,7 +6,7 @@ class Settings:
     UPLOAD_DIR = os.path.join(BASE_DIR, "assets", "uploads")
     VECTOR_DB_DIR = os.path.join(BASE_DIR, "data", "chroma_db")
     
-    EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2" # Runs locally
+    EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2" 
 
     GEMINI_API_KEY = "AIzaSyA9FmcmmAy39ZFfEQuwsmWakp_YMvdE5KA"  
     GEMINI_MODEL = "gemini-2.5-flash"  

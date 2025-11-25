@@ -13,7 +13,7 @@ from dom_parser import get_clean_html_tree
 # Configure Gemini
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
-# --- 1. Data Models ---
+# Data Models
 class TestCase(BaseModel):
     test_id: str = Field(description="Unique test case ID (e.g., TC-001)")
     feature: str = Field(default="General", description="Feature being tested")
@@ -28,7 +28,7 @@ class TestCase(BaseModel):
 class TestPlan(BaseModel):
     test_cases: List[TestCase]
 
-# --- 2. Helpers ---
+#  Helpers
 def _clean_code_output(code: str) -> str:
     """Remove markdown formatting (```python) from code output."""
     code = re.sub(r'^```python\s*\n', '', code, flags=re.MULTILINE)
@@ -48,7 +48,7 @@ def _call_gemini(prompt: str, system_instruction: str = "") -> str:
     except Exception as e:
         raise Exception(f"Gemini API error: {str(e)}")
 
-# --- 3. Agent 1: The Test Strategist ---
+# Agent 1: The Test Strategist 
 def generate_test_cases_agent(query: str) -> Dict:
     """Generates structured test cases using RAG + JSON Mode."""
     db = get_vector_db()
@@ -57,7 +57,7 @@ def generate_test_cases_agent(query: str) -> Dict:
     
     context_str = "\n\n".join([f"[Source: {d.metadata.get('source', 'Unknown')}]\n{d.page_content}" for d in docs])
 
-    # Keep the same prompt structure
+   
     system_prompt = """You are an Expert QA Test Lead.
     INSTRUCTIONS:
     1. Analyze the provided context.
@@ -90,10 +90,10 @@ Generate test plan for: {query}
 """
 
     try:
-        # Replace LangChain call with Gemini
+      
         response_text = _call_gemini(user_prompt, system_prompt)
         
-        # Parse JSON response manually since we're not using PydanticOutputParser
+        
         response_text = response_text.strip()
         if response_text.startswith('```json'):
             response_text = response_text[7:]
@@ -105,7 +105,7 @@ Generate test plan for: {query}
     except Exception as e:
         return {"error": f"Agent Generation Failed: {str(e)}"}
 
-# --- 4. Agent 2: The Selenium Engineer (YOUR OPTIMIZED VERSION) ---
+# Agent 2: The Selenium Engineer
 def generate_selenium_script_agent(test_case_json: str, html_content: str) -> str:
     """
     Generates robust Selenium scripts that test REAL user behavior, not just typing.
@@ -175,7 +175,7 @@ OUTPUT FORMAT
 """
 
     try:
-        # Replace LangChain call with Gemini
+        
         result = _call_gemini(user_prompt, system_prompt)
         return _clean_code_output(result)
     except Exception as e:
