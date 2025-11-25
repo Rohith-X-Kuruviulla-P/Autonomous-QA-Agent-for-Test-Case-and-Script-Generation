@@ -8,7 +8,7 @@ class Settings:
     
     EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2" 
 
-    GEMINI_API_KEY = "AIzaSyA9FmcmmAy39ZFfEQuwsmWakp_YMvdE5KA"  
+    GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")  
     GEMINI_MODEL = "gemini-2.5-flash"  
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
